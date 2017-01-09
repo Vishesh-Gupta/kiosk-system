@@ -1,3 +1,5 @@
+//Header Files
+
 #include <iostream.h>
 #include <fstream.h>
 #include <conio.h>
@@ -8,27 +10,34 @@
 #include <process.h>
 #include <time.h>
 
+//Class definition for ticket
 class ticket{
 	public:
 	char name[10];
 	char cno[10];
 } t;
 
+// Class definition for card
 class card :  public ticket{
 public:
 	char address[50];
 	char emailid[20];
 } v;
 
+//Prototype Call for the functions definitions.
 void pay(int);
 void random();
 void card();
 
+//Main function
 void main(){
 	clrscr();
+	//Integer Declaration
 	int ent, a, b, N, x, cardid;
 	char ans;
-	{time_t t = time(NULL);							//time setup
+	//To display the system time.
+	//Using time.h
+	{time_t t = time(NULL);
 	tm* timePtr = localtime(&t);
 	cout << "Time of the computer presently:";
 	cout << "seconds= " << timePtr->tm_sec << endl;
@@ -41,7 +50,9 @@ void main(){
 	cout << "day of year = " << timePtr->tm_yday << endl;
 	cout << "daylight savings = " << timePtr->tm_isdst << endl;
 	}
+	
 	do{
+		//Menu
 		cout<<"\n Welcome customer!";	 																					//Menu for the user
 		cout<<"\n 1. Movie Timings";
 		cout<<"\n 2. Recieving Ticket";
@@ -52,52 +63,53 @@ void main(){
 		cin>>ent;
 	switch(ent)
 	{
+			//Movie Titles
 		case 1: cout<<"\n\nThe Shows are :";
-				cout<<"\n\n 1. The Last Witch Hunter";
-				cout<<"\n\n 2. Kung Fu Panda 3";
-				cout<<"\n\n 3. Deadpool";
-				cout<<"\n\n 4. The Fast and the Furious 8";
-				cout<<"\n\n 5. Justice League\n";						//Movie names
+			cout<<"\n\n 1. The Last Witch Hunter";
+			cout<<"\n\n 2. Kung Fu Panda 3";
+			cout<<"\n\n 3. Deadpool";
+			cout<<"\n\n 4. The Fast and the Furious 8";
+			cout<<"\n\n 5. Justice League\n";
 			cout<<"Enter the number of the movie you want to watch :"<<"\t";
 			cin>>a;
 			cout<<"\n\n The Timings for the selected show are:";
 			switch(a)
 			{
 				case 1: cout<<"\n\n Select the the timings:";
-						cout<<"\n 1. 0800";
-						cout<<"\n 2. 1300";
-						cout<<"\n 3. 1450";
-						cout<<"\n 4. 1800";
-						cout<<"\n 5. 2100";
-						cout<<"\n 6. 0100 \n";					//Timings of the show
-						cout<<"\n\n Please select the timings";
-						cin>>b;
-						cout<<"\n\n Enter your name";
-						cin>>t.name;
-						cout<<"\n\n Enter your contact number";
-						cin>>t.cno;
-						cout<<"\n\n Enter the number of tickets you want to purchase";
-						int x;
-						cin>>x;
-						pay(x);
-						cout<<"\n\n\n Your ticket is here:";
-						cout<<"\n Name 		:"<<t.name;
-						cout<<"\n Contact No	:"<<t.cno;
-						cout<<"\n Show timings 	:";
-						switch(b)
+					cout<<"\n 1. 0800";
+					cout<<"\n 2. 1300";
+					cout<<"\n 3. 1450";
+					cout<<"\n 4. 1800";
+					cout<<"\n 5. 2100";
+					cout<<"\n 6. 0100 \n";					//Timings of the show
+					cout<<"\n\n Please select the timings";
+					cin>>b;
+					cout<<"\n\n Enter your name";
+					cin>>t.name;
+					cout<<"\n\n Enter your contact number";
+					cin>>t.cno;
+					cout<<"\n\n Enter the number of tickets you want to purchase";
+					int x;
+					cin>>x;
+					pay(x);
+					cout<<"\n\n\n Your ticket is here:";
+					cout<<"\n Name 		:"<<t.name;
+					cout<<"\n Contact No	:"<<t.cno;
+					cout<<"\n Show timings 	:";
+					switch(b)
 						{
 							case 1:	cout<<"0800";
-									break;
+								break;
 							case 2:	cout<<"1300";
-									break;
+								break;
 							case 3:	cout<<"1450";
-									break;
+								break;
 							case 4:	cout<<"1800";
-									break;
+								break;
 							case 5:	cout<<"2100";
-									break;
+								break;
 							case 6:	cout<<"0100";
-									break;
+								break;
 						}
 						cout<<"\n\n Do you want to choose another option(y/n)";
 						cin>>ans;
@@ -175,7 +187,7 @@ void main(){
 							case 5:	cout<<"2100";
 								break;
 							case 6:	cout<<"0100";
-									break;
+								break;
 					}
 					cout<<"\n\n Do you want to choose another option(y/n)";
 					cin>>ans;
@@ -409,9 +421,9 @@ void pay(int a)
 					break;
 				if (vh==8)
 				{
-					putch('b');
 					putch(NULL);
-					putch('b');
+					putch(NULL);
+					putch(NULL);
 					h--;
 					continue;
 				}
@@ -480,9 +492,9 @@ void pay(int a)
 					break;
 				if (vh==8)
 				{
-					putch('b');
 					putch(NULL);
-					putch('b');
+					putch(NULL);
+					putch(NULL);
 					h--;
 					continue;
 				}
