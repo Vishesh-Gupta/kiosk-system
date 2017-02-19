@@ -1,28 +1,28 @@
 //Header Files
-
-#include <iostream.h>
-#include <fstream.h>
-#include <conio.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <process.h>
-#include <time.h>
+#include <iostream>
+#include <fstream>
+#include <conio>
+#include <string>
+#include <math>
+#include <stdlib>
+#include <stdio>
+#include <process>
+#include <time>
+using namespace std;
 
 //Class definition for ticket
 class ticket{
 	public:
 	char name[10];
 	char cno[10];
-} t;
+} t; //object definition for ticket
 
 // Class definition for card
-class card :  public ticket{
+class card :  public ticket{  //inheritence for public ticket
 public:
 	char address[50];
 	char emailid[20];
-} v;
+} v; //object definition for card
 
 //Prototype Call for the functions definitions.
 void pay(int);
@@ -36,7 +36,7 @@ void main(){
 	int ent, a, b, N, x, cardid;
 	char ans;
 	//To display the system time.
-	//Using time.h
+	//Using time header file
 	{time_t t = time(NULL);
 	tm* timePtr = localtime(&t);
 	cout << "Time of the computer presently:";
@@ -51,6 +51,7 @@ void main(){
 	cout << "daylight savings = " << timePtr->tm_isdst << endl;
 	}
 	
+	//An exit controlled loop (Do...While)
 	do{
 		//Menu
 		cout<<"\n Welcome customer!";	 																					//Menu for the user
@@ -325,6 +326,8 @@ void main(){
 	}
 	}while(ans=='y');
 	}
+
+//Function Declaration for Card
 void card()
 {
 	int cardid;
@@ -350,6 +353,8 @@ void card()
 	fout.close();
 	cout<<"Thank you for the registeration for the card. \n";
 }
+
+//Payment system for the interface
 void pay(int a)
 {
 	int normal, gold, amt[2],id;
