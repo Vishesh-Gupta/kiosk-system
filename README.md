@@ -8,4 +8,4 @@ Setup/Guidelines to use:-
 --------------------------
 
 1. Clone the repo.
-2. Use a compiler to compile ad run it.
+2. Use a compiler to compile and run it.
