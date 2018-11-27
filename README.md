@@ -1,11 +1,16 @@
 # Movie Ticket Kiosk
 
-This is a C++ program I made during high school.
+A Simulator for purchasing Movie Tickets at a Kiosk Machine.
 
-This is an exact simulator for purchasing a movie ticket from a ticketing machine on c++.
+A Movie Ticket Kiosk implementation firstly done as Grade 12 project.
 
-Setup/Guidelines to use:-
---------------------------
+Recently updated after learning much more about the language of implementation (C++).
 
-1. Clone the repo.
-2. Use a compiler to compile and run it.
+## Getting Started
+
+1. Clone the repository using `git clone` command.
+
+2. Run `make` command for compilation.
+
+3. Executable will be created with the name mtk. Run in linux with `./mtk`
+
