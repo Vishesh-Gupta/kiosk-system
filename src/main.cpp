@@ -31,12 +31,12 @@ int main(int argc, char* argv[]) {
       case 1: // * Movie Ticket Booking
         // TODO: Write an output operator for movies
         for (auto m: movies) {
-          std::cout << m;
+          std::cout << m.name << m.year;
         }
         // TODO - Select the show timings
         std::cout << "Enter the number of the movie you want to watch :\t";
         std::cin >> movieNumber;
-        movies[movieNumber].showtimings();
+        movies[movieNumber].getShowtimings();
         break;
       case 2: // * Online Ticket Processing
         uuid_t confirmationNumber{};

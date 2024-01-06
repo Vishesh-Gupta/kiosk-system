@@ -1,6 +1,14 @@
+#include <iostream>
+#include <vector>
+#include <ctime>
+
 class Movie {
-public:
-  void showtimings();
+  public:
+  std::string name;
+  std::string year;
+  std::vector<time_t> timings;
+
+  void getShowtimings();
 };
 
 static std::vector<Movie> getCurrentlyRunningMovies() {
