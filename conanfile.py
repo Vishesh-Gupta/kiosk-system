@@ -5,7 +5,6 @@ class KioskRecipe(ConanFile):
     generators = "CMakeToolchain", "CMakeDeps"
 
     def requirements(self):
-        self.requires("zlib/1.3")
         self.requires("libpq/15.4")
 
     def build_requirements(self):
