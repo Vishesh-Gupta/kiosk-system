@@ -8,7 +8,6 @@
 #define VIP_SEAT 1000;
 
 void KioskTicket::generate_ticket(KioskTicket t) {
-
   std::cout << "==================================\n";
   std::cout << "Ticket: ";
   std::cout << "==================================\n";
@@ -36,11 +35,12 @@ int KioskTicket::getTicketCost(int numtickets) {
   }
 
   return cost;
-
 }
 
 void KioskTicket::ticketBooking(int numTickets, int timeingOption) {
-  
+  int cost = getTicketCost();
+
+  // TODO: Include the payment system here
 
   std::vector<KioskTicket> tickets;
   for (int i = 0; i < numTickets; i++) {
