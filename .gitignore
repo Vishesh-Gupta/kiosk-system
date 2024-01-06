@@ -1,1 +1,66 @@
+**/conan-*
+**/cmake_install.cmake
+**/CMakeCache.txt
+**/compressor
+**/Makefile
+**/CMakeFiles
+**/cmake-build-*
+**/deactivate_conanbuildenv*
+
+.DS_Store
 .vscode/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+*.dll
+
+# Fortran module files
+*.mod
+*.smod
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+*.lib
+
+# Executables
+*.exe
+*.out
+*.app
+
+# Cache
+__pycache__/*
+build/*
+*.pyc
+tmp/
+
+# IDE
+.idea/*
+.project
+.pydevproject
+.settings/*
+.ropeproject/*
+
+.tox
+CMakeUserPresets.json
+**/generators/**
+**/build/**
+conanbuild*
+conanrun*
+deactivate_conanbuild*
+deactivate_conanrun*
+
+# Bazel files
+bazel-*

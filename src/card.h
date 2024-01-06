@@ -2,6 +2,7 @@
 #define __CARD_H__
 
 #include <string>
+#include <uuid/uuid.h>
 
 class Card final {
   std::string name{};
@@ -12,7 +13,11 @@ class Card final {
 
  public:
   Card();
-  void cardRegistration();
+  void registration();
+
+  void benefits();
 };
+
+static bool isCardValid(uid_t);
 
 #endif
