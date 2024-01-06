@@ -1,11 +1,19 @@
 #include <iostream>
-#include <ofstream>
+#include <fstream>
 
 #include "card.h"
 
-void Card::cardRegistration() {
-  std::cout << "Card Registration\n";
-  std::cout << "Name: ";
+Card::Card() {
+  std::cout << "Thank you for your interest in Card Membership!\n";
+  std::cout << "Thankyou. Your process has initiated.";
+  std::cout << "The card will be mailed to you soon.";
+  std::cout << "Please see the benefits"
+              "of the "
+              "card on the next page. -->";
+}
+
+void Card::registration() {
+  std::cout << "Card Registration\n Name:";
   std::cin >> name;
   std::cout << "\nMobile Number: ";
   std::cin >> mobileNum;
@@ -22,4 +30,12 @@ void Card::cardRegistration() {
   fout << name << " " << mobileNum << " " << address << " " << emailId << " ";
   fout << cardNum;
   std::cout << "Registration Complete. Thank you!";
+}
+
+void Card::benefits() {
+  // TODO: Display benefits of a card
+}
+
+static bool isCardValid(uid_t cardnumber) {
+  return true;
 }
