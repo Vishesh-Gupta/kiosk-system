@@ -3,15 +3,20 @@
 
 #include <string>
 
-class Ticket {
+int CARD_DISCOUNT = 0.1;
+
+class KioskTicket {
+private:
   std::string name{};
   long unsigned int contactNum{};
+  std::string showtime{};
 
- public:
-  Ticket();
-  void createTicket();
-  void payment(int);
-  void ticketBooking(int);
+  void generate_ticket(KioskTicket);
+
+public:
+  KioskTicket();
+  int getTicketCost(int);
+  void ticketBooking(int, int);
 };
 
 #endif
