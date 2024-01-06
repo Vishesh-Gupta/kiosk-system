@@ -35,3 +35,7 @@ void Card::registration() {
 void Card::benefits() {
   // TODO: Display benefits of a card
 }
+
+static bool isCardValid(uid_t cardnumber) {
+  return true;
+}

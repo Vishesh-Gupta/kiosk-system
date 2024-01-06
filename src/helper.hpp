@@ -27,28 +27,7 @@ void creditPurchase(int ticketPrice) {
   };
 }
 
-
-void hidePassword() {
-  char password[3], vh;
-  int h;
-  puts("Enter the CVV/CVV2");
-  while (1) {
-    if (h < 0) h = 0;
-    vh = getch();
-    if (vh == 13) break;
-    if (vh == 8) {
-      putch(NULL);
-      putch(NULL);
-      putch(NULL);
-      h--;
-      continue;
-    }
-    password[h++] = vh;
-    vh = '*';
-    putch(vh);
-  };
-  password[h] == '\0';
-}
+void hidePassword() {}
 
 void getCurrentTime() {
   time_t t = time(NULL);

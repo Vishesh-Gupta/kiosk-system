@@ -3,8 +3,6 @@
 
 #include <string>
 
-int CARD_DISCOUNT = 0.1;
-
 class KioskTicket {
 private:
   std::string name{};                   // name of the ticket holder
@@ -15,11 +13,10 @@ private:
   void generate_ticket(KioskTicket);    // generate one ticket
 
 public:
-  KioskTicket();
   int getTicketCost(int);               // gets the ticket cost
   void ticketBooking(int, int);         // handles the ticket booking
 };
 
-static int getTicketFromDatabase(uuid_t confirmationNumber);       // get a pre-registered online booking from database
+static int getTicketFromDatabase(uid_t confirmationNumber);       // get a pre-registered online booking from database
 
 #endif

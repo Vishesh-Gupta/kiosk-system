@@ -6,7 +6,7 @@
 #include "ticket.h"
 #include "card.h"
 #include "helper.hpp"
-#include "movie.h"
+#include "movies.h"
 
 void pay(int);
 void card();
@@ -20,6 +20,8 @@ const char *welcomeText =
 int main(int argc, char* argv[]) {
   int option{0}, movieNumber{0}, N{0};
   char ans{};
+  uid_t confirmationNumber{};
+
   Card card{};
   getCurrentTime();
   KioskTicket ticket;
@@ -39,7 +41,6 @@ int main(int argc, char* argv[]) {
         movies[movieNumber].getShowtimings();
         break;
       case 2: // * Online Ticket Processing
-        uuid_t confirmationNumber{};
         std::cout << "Could you please enter your confirmation number?";
         std::cin >> confirmationNumber;
         getTicketFromDatabase(confirmationNumber);

@@ -14,8 +14,10 @@ class Card final {
  public:
   Card();
   void registration();
-  static bool isCardValid(uuid_t cardID);
+
   void benefits();
 };
+
+static bool isCardValid(uid_t);
 
 #endif

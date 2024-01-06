@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+float CARD_DISCOUNT = 0.1;
+
 #define NORMAL_SEAT 400;
 #define GOLD_SEAT 700;
 #define VIP_SEAT 1000;
@@ -20,7 +22,7 @@ void KioskTicket::generate_ticket(KioskTicket t) {
 
 int KioskTicket::getTicketCost(int numtickets) {
   int cost{};
-  uuid_t cardNumber{};
+  uid_t cardNumber{};
   int seatType;
 
   std::cout << "What kind of seating would you like? The options are";
@@ -30,15 +32,15 @@ int KioskTicket::getTicketCost(int numtickets) {
   else if (seatType == 1) { cost = GOLD_SEAT; }
   else { cost = VIP_SEAT; }
 
-  if (Card::isCardValid(cardNumber) == true) {
-    cost = cost - (cost * CARD_DISCOUNT);
-  }
+  // if (isCardValid(cardNumber) == true) {
+  //   cost = cost - (cost * CARD_DISCOUNT);
+  // }
 
   return cost;
 }
 
 void KioskTicket::ticketBooking(int numTickets, int timeingOption) {
-  int cost = getTicketCost();
+  int cost = getTicketCost(numTickets);
 
   // TODO: Include the payment system here
 
