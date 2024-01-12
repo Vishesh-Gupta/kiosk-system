@@ -1,0 +1,71 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+
+option java_multiple_files = true;
+option java_package = "io.grpc.examples.kiosk";
+option java_outer_classname = "KioskProto";
+option objc_class_prefix = "K";
+
+package kiosk;
+
+// The Kiosk Service definition
+service Kiosk {
+  rpc GetData (GetDataRequest) returns (GetDataResponse) {
+    option (google.api.http) = { get: "/v1/data" };
+  }
+  rpc ListData (ListDataRequest) returns (ListDataResponse) {
+    option (google.api.http) = { get: "/v1/datas" };
+  }
+  rpc PostData (PostDataRequest) returns (PostDataResponse) {
+    option (google.api.http) = { post: "/v1/data/" };
+  }
+  rpc DeleteData (DeleteDataRequest) returns (DeleteDataResponse) {
+    option (google.api.http) = { delete: "/v1/data" };
+  }
+  rpc UpdateData (UpdateDataRequest) returns (UpdateDataResponse) {
+    option (google.api.http) = { patch: "/v1/shelves/{shelf}" };
+  }
+}
+
+// The request message containing the user's name.
+message GetDataRequest {
+  string name = 1;
+}
+
+message GetDataResponse {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message ListDataRequest {
+  string message = 1;
+}
+
+message ListDataResponse {
+  string message = 1;
+}
+
+message PostDataRequest {
+  string message = 1;
+}
+
+message PostDataResponse {
+  string message = 1;
+}
+
+message DeleteDataRequest {
+  string message = 1;
+}
+
+message DeleteDataResponse {
+  string message = 1;
+}
+
+message UpdateDataRequest {
+  string message = 1;
+}
+
+message UpdateDataResponse {
+  string message = 1;
+}
