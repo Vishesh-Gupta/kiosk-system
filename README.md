@@ -24,6 +24,12 @@ I built it as my Grade 12 Project Submission, and then improved it mid universit
 2. Run the following commands to build the code
 
 ```sh
+$ cd cmake/build
+$ cmake -DCMAKE_PREFIX_PATH=$MY_INSTALL_DIR ..
+$ make
+```
+
+```sh
 conan install . --output-folder=build --build=missing
 cd build/
 cmake .. -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release

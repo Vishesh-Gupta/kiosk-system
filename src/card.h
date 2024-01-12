@@ -4,16 +4,18 @@
 #include <string>
 #include <uuid/uuid.h>
 
+using namespace std;
+
 class Card final {
-  std::string name{};
+  string name{};
   int cardNum{};
   long unsigned int mobileNum{};
-  std::string address{};
-  std::string emailId{};
+  string address{};
+  string emailId{};
 
  public:
   Card();
-  void registration();
+  void registration(string name, string number, string address, string email);
 
   void benefits();
 };
