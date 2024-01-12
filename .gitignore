@@ -40,6 +40,9 @@
 *.out
 *.app
 
+# Code Gen
+gen/
+
 # Cache
 __pycache__/*
 build/*
