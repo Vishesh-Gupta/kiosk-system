@@ -15,7 +15,7 @@
 #include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
-#include "../gen/kiosk.grpc.pb.h"
+#include "../api/gen/kiosk.grpc.pb.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
