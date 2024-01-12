@@ -4,10 +4,6 @@
 #include <fstream>
 #include <ctime>
 
-#include "ticket.h"
-#include "card.h"
-#include "helper.h"
-#include "movies.h"
 #include "db.h"
 
 #include <grpc/grpc.h>

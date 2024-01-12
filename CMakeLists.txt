@@ -71,7 +71,7 @@ target_link_libraries(kiosk_grpc_proto
 # Library building
 
 foreach(_library
-  helper card db movies
+  db
 )
   add_library(${_library}
     "../src/${_library}.h"
@@ -96,9 +96,6 @@ foreach(_target
   )
   target_link_libraries(${_target}
     kiosk_grpc_proto
-    helper
-    card
-    movies
     db
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
