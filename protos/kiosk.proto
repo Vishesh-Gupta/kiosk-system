@@ -1,28 +1,32 @@
 syntax = "proto3";
 
 option java_multiple_files = true;
-option java_package = "io.grpc.examples.helloworld";
-option java_outer_classname = "HelloWorldProto";
-option objc_class_prefix = "HLW";
+option java_package = "io.grpc.examples.kiosk";
+option java_outer_classname = "KioskProto";
+option objc_class_prefix = "K";
 
-package helloworld;
+package kiosk;
 
 // The greeting service definition.
-service Greeter {
-  // Sends a greeting
-  rpc SayHello (HelloRequest) returns (HelloReply) {}
-
-  rpc SayHelloStreamReply (HelloRequest) returns (stream HelloReply) {}
-
-  rpc SayHelloBidiStream (stream HelloRequest) returns (stream HelloReply) {}
+service Kiosk {
+  rpc GetData (GetDataRequest) returns (GetDataResponse) {}
+  rpc ListData (ListDataRequest) returns (ListDataResponse) {}
 }
 
 // The request message containing the user's name.
-message HelloRequest {
+message GetDataRequest {
+  string name = 1;
+}
+
+message GetDataResponse {
   string name = 1;
 }
 
 // The response message containing the greetings
-message HelloReply {
+message ListDataRequest {
+  string message = 1;
+}
+
+message ListDataResponse {
   string message = 1;
 }
