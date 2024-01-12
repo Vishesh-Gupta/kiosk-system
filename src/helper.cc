@@ -1,7 +1,8 @@
 #include <iostream>
 #include <ctime>
 
-void creditPurchase(int ticketPrice) {
+namespace kiosk {
+  void creditPurchase(int ticketPrice) {
   time_t t = time(NULL);
   tm* timePtr = localtime(&t);
   std::cout << "Paying :" << ticketPrice << "\n";
@@ -42,4 +43,5 @@ void getCurrentTime() {
   std::cout << "weekday = " << timePtr->tm_wday << std::endl;
   std::cout << "day of year = " << timePtr->tm_yday << std::endl;
   std::cout << "daylight savings = " << timePtr->tm_isdst << std::endl;
+}
 }

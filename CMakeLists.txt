@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.22)
 
 project(kiosk C CXX)
 
@@ -27,6 +27,11 @@ if(CMAKE_CROSSCOMPILING)
 else()
   set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
+
+set(libpqxx_DIR "build/")
+set(PostgreSQL_DIR "build/")
+find_package(libpqxx REQUIRED)
+# find_package(PostgreSQL REQUIRED)
 
 # Proto file
 get_filename_component(kiosk_proto "protos/kiosk.proto" ABSOLUTE)
@@ -59,26 +64,45 @@ add_library(kiosk_grpc_proto
 target_link_libraries(kiosk_grpc_proto
   ${_REFLECTION}
   ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF})
+  ${_PROTOBUF_LIBPROTOBUF}
+  libpqxx::pqxx
+)
 
-# kiosk_helper
-# add_library(kiosk_helper
-#   "helper.h"
-#   "helper.cc")
-# target_link_libraries(kiosk_helper
-#   m_grpc_proto
-#   ${_REFLECTION}
-#   ${_GRPC_GRPCPP}
-#   ${_PROTOBUF_LIBPROTOBUF})
+# Library building
 
-# Targets kiosk_(client|server)
-foreach(_target
-  kiosk_client kiosk_server)
-  add_executable(${_target}
-    "../src/${_target}.cc")
-  target_link_libraries(${_target}
+foreach(_library
+  helper card db movies
+)
+  add_library(${_library}
+    "../src/${_library}.h"
+    "../src/${_library}.cc")
+  target_link_libraries(${_library}
     kiosk_grpc_proto
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
-    ${_PROTOBUF_LIBPROTOBUF})
+    ${_PROTOBUF_LIBPROTOBUF}
+    libpqxx::pqxx
+  )
+endforeach()
+
+# Targets kiosk_(client|server)
+foreach(_target
+  kiosk_server)
+  add_executable(${_target}
+    "../src/${_target}.cc")
+  target_include_directories(${_target}
+    PRIVATE
+    ${PostgreSQL_INCLUDE_DIRS}
+  )
+  target_link_libraries(${_target}
+    kiosk_grpc_proto
+    helper
+    card
+    movies
+    db
+    ${_REFLECTION}
+    ${_GRPC_GRPCPP}
+    ${_PROTOBUF_LIBPROTOBUF}
+    libpqxx::pqxx
+)
 endforeach()
