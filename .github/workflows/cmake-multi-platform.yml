@@ -24,7 +24,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         build_type: [Release]
-        cpp_compiler: [gcc]
+        cpp_compiler: [g++]
 
     steps:
     - uses: actions/checkout@v3
