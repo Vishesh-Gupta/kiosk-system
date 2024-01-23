@@ -49,8 +49,8 @@ jobs:
         -DCMAKE_TOOLCHAIN_FILE=conan_toolchain.cmake
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
-    - name: Create proto/gen directory
-      run: mkdir -p ${{github.workspace}}/proto/gen
+    - name: Create proto/gen/kiosk directory
+      run: mkdir -p ${{github.workspace}}/proto/gen/kiosk
 
     - name: Build
       # Build your program with the given configuration. Note that --config is needed because the default Windows generator is a multi-config generator (Visual Studio generator).
