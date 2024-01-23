@@ -34,26 +34,26 @@ find_package(libpqxx REQUIRED)
 # find_package(PostgreSQL REQUIRED)
 
 # Proto file
-get_filename_component(kiosk_proto "api/proto/kiosk.proto" ABSOLUTE)
+get_filename_component(kiosk_proto "proto/kiosk/kiosk.proto" ABSOLUTE)
 get_filename_component(kiosk_proto_path "${kiosk_proto}" PATH)
 
 # Generated sources
-set(kiosk_proto_srcs "../api/gen/kiosk.pb.cc")
-set(kiosk_proto_hdrs "../api/gen/kiosk.pb.h")
-set(kiosk_grpc_srcs "../api/gen/kiosk.grpc.pb.cc")
-set(kiosk_grpc_hdrs "../api/gen/kiosk.grpc.pb.h")
+set(kiosk_proto_srcs "../proto/gen/kiosk/kiosk.pb.cc")
+set(kiosk_proto_hdrs "../proto/gen/kiosk/kiosk.pb.h")
+set(kiosk_grpc_srcs "../proto/gen/kiosk/kiosk.grpc.pb.cc")
+set(kiosk_grpc_hdrs "../proto/gen/kiosk/kiosk.grpc.pb.h")
 add_custom_command(
       OUTPUT "${kiosk_proto_srcs}" "${kiosk_proto_hdrs}" "${kiosk_grpc_srcs}" "${kiosk_grpc_hdrs}"
       COMMAND ${_PROTOBUF_PROTOC}
-      ARGS --grpc_out "../api/gen/"
-        --cpp_out "../api/gen/"
+      ARGS --grpc_out "../proto/gen/kiosk"
+        --cpp_out "../proto/gen/kiosk"
         -I "${kiosk_proto_path}"
         --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
         "${kiosk_proto}"
       DEPENDS "${kiosk_proto}")
 
 # Include generated *.pb.h files
-include_directories("../api/gen")
+include_directories("proto/gen/kiosk")
 
 # m_grpc_proto
 add_library(kiosk_grpc_proto
