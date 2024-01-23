@@ -27,7 +27,7 @@ jobs:
         cpp_compiler: [g++]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Installing essentials
       run:  sudo apt install -y build-essential autoconf libtool pkg-config
