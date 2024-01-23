@@ -53,7 +53,7 @@ add_custom_command(
       DEPENDS "${kiosk_proto}")
 
 # Include generated *.pb.h files
-include_directories("../proto/gen/kiosk")
+include_directories("proto/gen/kiosk")
 
 # m_grpc_proto
 add_library(kiosk_grpc_proto
