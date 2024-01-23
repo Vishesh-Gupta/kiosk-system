@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-import "google/api/annotations.proto";
+// import "google/api/annotations.proto";
 
 option java_multiple_files = true;
 option java_package = "io.grpc.examples.kiosk";
@@ -12,19 +12,19 @@ package kiosk;
 // The Kiosk Service definition
 service Kiosk {
   rpc GetData (GetDataRequest) returns (GetDataResponse) {
-    option (google.api.http) = { get: "/v1/data" };
+    // option (google.api.http) = { get: "/v1/data" };
   }
   rpc ListData (ListDataRequest) returns (ListDataResponse) {
-    option (google.api.http) = { get: "/v1/datas" };
+    // option (google.api.http) = { get: "/v1/datas" };
   }
   rpc PostData (PostDataRequest) returns (PostDataResponse) {
-    option (google.api.http) = { post: "/v1/data/" };
+    // option (google.api.http) = { post: "/v1/data/" };
   }
   rpc DeleteData (DeleteDataRequest) returns (DeleteDataResponse) {
-    option (google.api.http) = { delete: "/v1/data" };
+    // option (google.api.http) = { delete: "/v1/data" };
   }
   rpc UpdateData (UpdateDataRequest) returns (UpdateDataResponse) {
-    option (google.api.http) = { patch: "/v1/shelves/{shelf}" };
+    // option (google.api.http) = { patch: "/v1/shelves/{shelf}" };
   }
 }
 
