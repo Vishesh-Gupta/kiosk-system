@@ -29,6 +29,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Installing essentials
+      run:  sudo apt install -y build-essential autoconf libtool pkg-config
 
     - name: Conan installation
       id: conan
