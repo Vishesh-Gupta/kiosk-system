@@ -1,18 +1,16 @@
 #include "db.h"
 
-#include <iostream>
-#include <sstream>
-#include <fstream>
 #include <filesystem>
+#include <fstream>
+#include <iostream>
 #include <nlohmann/json.hpp>
+#include <sstream>
 
 DB::DB() {
   // Try to load config from common locations
   std::vector<std::string> configPaths = {
-    "config.json",
-    "/etc/kiosk/config.json",
-    std::string(getenv("HOME") ? getenv("HOME") : "") + "/.config/kiosk/config.json"
-  };
+      "config.json", "/etc/kiosk/config.json",
+      std::string(getenv("HOME") ? getenv("HOME") : "") + "/.config/kiosk/config.json"};
 
   bool loaded = false;
   for (const auto& path : configPaths) {
@@ -27,7 +25,7 @@ DB::DB() {
         port = config.value("port", "5432");
         username = config.value("username", "postgres");
         password = config.value("password", "password");
-        
+
         loaded = true;
         break;
       } catch (const std::exception& e) {
@@ -43,7 +41,7 @@ DB::DB() {
     port = "5432";
     username = "postgres";
     password = "password";
-    
+
     std::cerr << "Warning: Using default database configuration" << std::endl;
   }
 }
@@ -54,11 +52,7 @@ void DB::connect() {
   }
 
   std::stringstream connStr;
-  connStr << "postgresql://" 
-          << username << ":" 
-          << password << "@"
-          << host << ":"
-          << port << "/"
+  connStr << "postgresql://" << username << ":" << password << "@" << host << ":" << port << "/"
           << dbName;
 
   conn = std::make_unique<pqxx::connection>(connStr.str());
