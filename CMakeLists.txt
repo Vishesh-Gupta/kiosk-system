@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 4.2.0)
 
 project(kiosk C CXX)
 
@@ -34,6 +34,8 @@ endif()
 
 # Database dependencies
 find_package(libpqxx REQUIRED)
+
+find_package(nlohmann_json REQUIRED)
 
 # Proto file setup
 set(PROTO_ROOT "${CMAKE_SOURCE_DIR}/proto")
@@ -99,6 +101,7 @@ foreach(lib ${CORE_LIBRARIES})
       ${_GRPC_GRPCPP}
       ${_PROTOBUF_LIBPROTOBUF}
       libpqxx::pqxx
+      nlohmann_json::nlohmann_json
   )
 endforeach()
 
@@ -115,6 +118,7 @@ target_link_libraries(kiosk_server
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF}
     libpqxx::pqxx
+    nlohmann_json::nlohmann_json
 )
 
 # Testing setup
@@ -134,3 +138,5 @@ target_link_libraries(db_test
 )
 
 add_test(NAME db_test COMMAND db_test)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
