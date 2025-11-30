@@ -5,43 +5,38 @@ on:
     branches:
       - main
     paths:
-      - "proto/**/*.proto"  # More specific path matching
+      - "proto/**/*.proto"
   pull_request:
     branches:
       - main
     paths:
-      - "proto/**/*.proto"  # Run on PRs too for early feedback
+      - "proto/**/*.proto"
 
 jobs:
-  validate-and-publish:  # More descriptive job name
+  validate-and-publish:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Needed for breaking change detection
+          fetch-depth: 0
 
       - name: Setup buf
         uses: bufbuild/buf-setup-action@v1
         with:
-          version: "1.28.1"  # Pin to specific version for stability
+          version: "1.28.1"
           github_token: ${{ github.token }}
 
       - name: Lint proto files
-        uses: bufbuild/buf-lint-action@v1
-        with:
-          input: "proto"
-          
+        run: buf lint proto
+
       - name: Check for breaking changes
-        uses: bufbuild/buf-breaking-action@v1
-        with:
-          input: "proto"
-          against: "https://github.com/${GITHUB_REPOSITORY}.git#branch=main"
-        if: github.event_name == 'pull_request'  # Only check on PRs
+        if: github.event_name == 'pull_request'
+        run: |
+          buf breaking --against "https://github.com/${{ github.repository }}.git#branch=main" proto
 
       - name: Push to buf.build registry
-        uses: bufbuild/buf-push-action@v1
-        with:
-          input: "proto"
-          buf_token: ${{ secrets.BUF_TOKEN }}
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'  # Only push on main branch
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          BUF_TOKEN: ${{ secrets.BUF_TOKEN }}
+        run: buf push proto

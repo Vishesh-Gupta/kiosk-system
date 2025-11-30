@@ -7,8 +7,8 @@ on:
     branches: [ "main" ]
 
 env:
-  build_dir: "build"
-  conan_config: "Release"
+  build_dir: build
+  conan_config: Release
 
 jobs:
   build:
@@ -20,67 +20,65 @@ jobs:
         os: [ubuntu-latest]
         build_type: [Release, Debug]
         cpp_compiler: [g++, clang++]
-        include:
-          - os: ubuntu-latest
-            cpp_compiler: g++
-            coverage: true
+        coverage: [false, true]
 
     steps:
-    - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Cache Conan packages
-      uses: actions/cache@v3
-      with:
-        path: ~/.conan2
-        key: ${{ runner.os }}-conan-${{ hashFiles('**/conanfile.txt') }}
-        restore-keys: |
-          ${{ runner.os }}-conan-
+      - name: Cache Conan packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.conan2
+          key: ${{ runner.os }}-conan-${{ hashFiles('**/conanfile.txt') }}
+          restore-keys: ${{ runner.os }}-conan-
 
-    - name: Install system dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y build-essential autoconf libtool pkg-config lcov
+      - name: Install system dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential autoconf libtool pkg-config lcov
 
-    - name: Install Conan
-      uses: turtlebrowser/get-conan@v1.0
+      - name: Install Conan
+        uses: turtlebrowser/get-conan@v1.0
 
-    - name: Configure Conan
-      run: |
-        conan profile detect
-        conan install . \
-          --output-folder=${{ env.build_dir }} \
-          --build=missing \
-          -s build_type=${{ matrix.build_type }}
+      - name: Configure Conan
+        run: |
+          conan profile detect
+          conan install . \
+            --output-folder=${{ env.build_dir }} \
+            --build=missing \
+            -s build_type=${{ matrix.build_type }}
 
-    - name: Create Proto directories
-      run: mkdir -p ${{github.workspace}}/proto/gen/kiosk
+      - name: Create Proto directories
+        run: mkdir -p ${{ github.workspace }}/proto/gen/kiosk
 
-    - name: Configure CMake
-      run: >
-        cmake -B ${{ env.build_dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_TOOLCHAIN_FILE=${{ env.build_dir }}/conan_toolchain.cmake
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DENABLE_COVERAGE=${{ matrix.coverage == true }}
+      - name: Configure CMake
+        run: >
+          cmake -B ${{ env.build_dir }}
+          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          -DCMAKE_TOOLCHAIN_FILE=${{ env.build_dir }}/conan_toolchain.cmake
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DENABLE_COVERAGE=${{ matrix.coverage }}
 
-    - name: Build
-      run: cmake --build ${{ env.build_dir }} --config ${{ matrix.build_type }} -j$(nproc)
+      - name: Build
+        run: cmake --build ${{ env.build_dir }} --config ${{ matrix.build_type }} -j$(nproc)
 
-    - name: Test
-      working-directory: ${{ env.build_dir }}
-      run: ctest --output-on-failure --build-config ${{ matrix.build_type }}
+      - name: Test
+        working-directory: ${{ env.build_dir }}
+        run: |
+          ctest --output-on-failure --build-config ${{ matrix.build_type }}
 
-    - name: Generate coverage report
-      if: matrix.coverage == true
-      working-directory: ${{ env.build_dir }}
-      run: |
-        lcov --capture --directory . --output-file coverage.info
-        lcov --remove coverage.info '/usr/*' --output-file coverage.info
-        lcov --list coverage.info
+      - name: Generate coverage report
+        if: ${{ matrix.coverage == true }}
+        working-directory: ${{ env.build_dir }}
+        run: |
+          lcov --capture --directory . --output-file coverage.info
+          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --list coverage.info
 
-    - name: Upload coverage report
-      if: matrix.coverage == true
-      uses: actions/upload-artifact@v3
-      with:
-        name: coverage-report
-        path: ${{ env.build_dir }}/coverage.info
+      - name: Upload coverage report
+        if: ${{ matrix.coverage == true }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage-report
+          path: ${{ env.build_dir }}/coverage.info
