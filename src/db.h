@@ -1,11 +1,11 @@
 #ifndef DB_H
 #define DB_H
 
-#include <pqxx/pqxx>
-#include <string>
+#include <exception>
 #include <memory>
 #include <mutex>
-#include <exception>
+#include <pqxx/pqxx>
+#include <string>
 #include <vector>
 
 // Custom exception for database operations
@@ -33,31 +33,45 @@ public:
   
   DB(const DB&) = delete;
   DB& operator=(const DB&) = delete;
+
+  // Move constructor
+  DB(DB&& other) noexcept
+      : dbName(std::move(other.dbName)),
+        host(std::move(other.host)),
+        port(std::move(other.port)),
+        password(std::move(other.password)),
+        username(std::move(other.username)),
+        conn(std::move(other.conn)) {}
+
+  // Move assignment operator
+  DB& operator=(DB&& other) noexcept {
+    if (this != &other) {
+      std::lock(dbMutex, other.dbMutex);
+      std::lock_guard<std::mutex> lhs_lock(dbMutex, std::adopt_lock);
+      std::lock_guard<std::mutex> rhs_lock(other.dbMutex, std::adopt_lock);
+
+      dbName = std::move(other.dbName);
+      host = std::move(other.host);
+      port = std::move(other.port);
+      password = std::move(other.password);
+      username = std::move(other.username);
+      conn = std::move(other.conn);
+    }
+    return *this;
+  }
   
-  // Executes a query without returning results
-  void query(const std::string& sql);
-  
-  // Executes a query and returns the results
   pqxx::result exec(const std::string& sql);
 
   pqxx::result exec_params(const std::string& sql, const std::vector<std::string>& params);
 
   std::string escape(const std::string& str) const;
 
-  // Connection management
+  
   bool isConnected() const;
   void connect();
   void disconnect();
   void reconnect();
 
-  // Getters/setters for connection params
-  void setDbName(const std::string& name) { dbName = name; }
-  void setHost(const std::string& h) { host = h; }
-  void setPort(const std::string& p) { port = p; }
-  void setUsername(const std::string& user) { username = user; }
-  void setPassword(const std::string& pass) { password = pass; }
-
-  // Getters
   std::string getDbName() const { return dbName; }
   std::string getHost() const { return host; }
 };
