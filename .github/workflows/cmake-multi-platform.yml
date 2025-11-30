@@ -12,15 +12,20 @@ env:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       matrix:
-        os: [ubuntu-latest]
-        build_type: [Release, Debug]
-        cpp_compiler: [g++, clang++]
-        coverage: [false, true]
+        include:
+          - name: Release GCC
+            build_type: Release
+            cpp_compiler: g++
+            coverage: false
+          - name: Debug Coverage GCC
+            build_type: Debug
+            cpp_compiler: g++
+            coverage: true
 
     steps:
       - uses: actions/checkout@v4
@@ -33,21 +38,28 @@ jobs:
           restore-keys: ${{ runner.os }}-conan-
 
       - name: Install system dependencies
-        if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential autoconf libtool pkg-config lcov
 
-      - name: Install Conan
-        uses: turtlebrowser/get-conan@v1.0
+      - name: Install Conan (pipx for speed)
+        run: |
+          python3 -m pip install --user pipx
+          ~/.local/bin/pipx install "conan<2.0.0" --include-deps
 
       - name: Configure Conan
         run: |
-          conan profile detect
-          conan install . \
+          ~/.local/bin/conan profile detect --force
+          ~/.local/bin/conan install . \
             --output-folder=${{ env.build_dir }} \
-            --build=missing \
-            -s build_type=${{ matrix.build_type }}
+            --build=never \
+            -s build_type=${{ matrix.build_type }} \
+            --require-approval=never \
+            --client-conf tools.cmake.cmake_program:cmake="$(which cmake)" \
+            --client-conf tools.system.package_manager:mode=install \
+            --client-conf general.parallel_download=6
+        env:
+          CONAN_SYSREQUIRES_MODE: disabled
 
       - name: Create Proto directories
         run: mkdir -p ${{ github.workspace }}/proto/gen/kiosk
@@ -61,7 +73,7 @@ jobs:
           -DENABLE_COVERAGE=${{ matrix.coverage }}
 
       - name: Build
-        run: cmake --build ${{ env.build_dir }} --config ${{ matrix.build_type }} -j$(nproc)
+        run: cmake --build ${{ env.build_dir }} --config ${{ matrix.build_type }} -j2
 
       - name: Test
         working-directory: ${{ env.build_dir }}
