@@ -7,20 +7,15 @@ option objc_class_prefix = "K";
 
 package kiosk;
 
-// The Kiosk Service definition
 service Kiosk {
-  // Movie operations
   rpc GetMovie (GetMovieRequest) returns (GetMovieResponse);
   rpc ListMovies (ListMoviesRequest) returns (ListMoviesResponse);
   rpc CreateMovie (CreateMovieRequest) returns (CreateMovieResponse);
   rpc DeleteMovie (DeleteMovieRequest) returns (DeleteMovieResponse);
   rpc UpdateMovie (UpdateMovieRequest) returns (UpdateMovieResponse);
-  
-  // Health check
   rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
 }
 
-// Movie message representing a movie entity
 message Movie {
   int32 id = 1;
   string name = 2;
@@ -32,7 +27,6 @@ message Movie {
   string updated_at = 8;
 }
 
-// Request/Response for GetMovie
 message GetMovieRequest {
   int32 id = 1;
 }
@@ -43,7 +37,6 @@ message GetMovieResponse {
   Movie movie = 3;
 }
 
-// Request/Response for ListMovies
 message ListMoviesRequest {
   int32 limit = 1;
   int32 offset = 2;
@@ -57,7 +50,6 @@ message ListMoviesResponse {
   int32 total_count = 4;
 }
 
-// Request/Response for CreateMovie
 message CreateMovieRequest {
   string name = 1;
   int32 release_year = 2;
@@ -72,7 +64,6 @@ message CreateMovieResponse {
   Movie movie = 3;
 }
 
-// Request/Response for UpdateMovie
 message UpdateMovieRequest {
   int32 id = 1;
   string name = 2;
@@ -88,7 +79,6 @@ message UpdateMovieResponse {
   Movie movie = 3;
 }
 
-// Request/Response for DeleteMovie
 message DeleteMovieRequest {
   int32 id = 1;
 }
@@ -98,7 +88,6 @@ message DeleteMovieResponse {
   string message = 2;
 }
 
-// Health check
 message HealthCheckRequest {}
 
 message HealthCheckResponse {
