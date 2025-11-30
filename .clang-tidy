@@ -4,7 +4,8 @@ Checks: >
   -google-runtime-references,
   -llvm-header-guard,
   -llvmlibc-*,
-  -modernize-use-trailing-return-type
+  -modernize-use-trailing-return-type,
+  -llvm-include-order
 WarningsAsErrors: ''
 HeaderFilterRegex: '.*'
 FormatStyle: file 
