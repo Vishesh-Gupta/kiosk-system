@@ -1,0 +1,27 @@
+{
+  "files.exclude": {
+    "**/cmake-build-debug/**": true,
+    "**/cmake-build-release/**": true,
+    "**/cmake-build-debug-coverage/**": true,
+    "**/cmake-build-release-coverage/**": true,
+    "**/cmake-build-debug-coverage-profile/**": true,
+    "**/cmake-build-release-coverage-profile/**": true,
+    "**/cmake-build-debug-coverage-profile-sanitize/**": true,
+    "**/cmake-build-release-coverage-profile-sanitize/**": true,
+    "**/cmake-build-debug-coverage-profile-sanitize-address/**": true,
+    "**/cmake-build-release-coverage-profile-sanitize-address/**": true,
+  },
+  "files.watcherExclude": {
+    "**/cmake-build-debug/**": true,
+    "**/cmake-build-release/**": true,
+    "**/cmake-build-debug-coverage/**": true,
+    "**/cmake-build-release-coverage/**": true,
+    "**/cmake-build-debug-coverage-profile/**": true,
+    "**/cmake-build-release-coverage-profile/**": true,
+    "**/cmake-build-debug-coverage-profile-sanitize/**": true,
+    "**/cmake-build-release-coverage-profile-sanitize/**": true,
+    "**/cmake-build-debug-coverage-profile-sanitize-address/**": true,
+    "**/cmake-build-release-coverage-profile-sanitize-address/**": true,
+  },
+  
+}

@@ -1,4 +1,4 @@
-version: v1
+version: v2
 plugins:
-  - plugin: buf.build/protocolbuffers/cpp
+  - remote: buf.build/protocolbuffers/cpp
     out: gen

@@ -1,9 +1,14 @@
-cmake_minimum_required(VERSION 3.22)
+cmake_minimum_required(VERSION 4.2.0)
 
 project(kiosk C CXX)
 
+# Set C++ standard
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 find_package(Threads REQUIRED)
 
+# Protobuf setup
 option(protobuf_MODULE_COMPATIBLE TRUE)
 find_package(Protobuf CONFIG REQUIRED)
 message(STATUS "Using protobuf ${Protobuf_VERSION}")
@@ -16,8 +21,7 @@ else()
   set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
 endif()
 
-# Find gRPC installation
-# Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
+# gRPC setup
 find_package(gRPC CONFIG REQUIRED)
 message(STATUS "Using gRPC ${gRPC_VERSION}")
 
@@ -28,78 +32,111 @@ else()
   set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 endif()
 
-set(libpqxx_DIR "build/")
-set(PostgreSQL_DIR "build/")
+# Database dependencies
 find_package(libpqxx REQUIRED)
-# find_package(PostgreSQL REQUIRED)
 
-# Proto file
-get_filename_component(kiosk_proto "proto/kiosk/kiosk.proto" ABSOLUTE)
+find_package(nlohmann_json REQUIRED)
+
+# Proto file setup
+set(PROTO_ROOT "${CMAKE_SOURCE_DIR}/proto")
+set(PROTO_GEN_ROOT "${PROTO_ROOT}/gen")
+get_filename_component(kiosk_proto "${PROTO_ROOT}/kiosk/kiosk.proto" ABSOLUTE)
 get_filename_component(kiosk_proto_path "${kiosk_proto}" PATH)
 
+# Create proto gen directory if it doesn't exist
+file(MAKE_DIRECTORY "${PROTO_GEN_ROOT}/kiosk")
+
 # Generated sources
-set(kiosk_proto_srcs "../proto/gen/kiosk/kiosk.pb.cc")
-set(kiosk_proto_hdrs "../proto/gen/kiosk/kiosk.pb.h")
-set(kiosk_grpc_srcs "../proto/gen/kiosk/kiosk.grpc.pb.cc")
-set(kiosk_grpc_hdrs "../proto/gen/kiosk/kiosk.grpc.pb.h")
+set(kiosk_proto_srcs "${PROTO_GEN_ROOT}/kiosk/kiosk.pb.cc")
+set(kiosk_proto_hdrs "${PROTO_GEN_ROOT}/kiosk/kiosk.pb.h")
+set(kiosk_grpc_srcs "${PROTO_GEN_ROOT}/kiosk/kiosk.grpc.pb.cc")
+set(kiosk_grpc_hdrs "${PROTO_GEN_ROOT}/kiosk/kiosk.grpc.pb.h")
+
+# Proto generation command
 add_custom_command(
-      OUTPUT "${kiosk_proto_srcs}" "${kiosk_proto_hdrs}" "${kiosk_grpc_srcs}" "${kiosk_grpc_hdrs}"
-      COMMAND ${_PROTOBUF_PROTOC}
-      ARGS --grpc_out "../proto/gen/kiosk"
-        --cpp_out "../proto/gen/kiosk"
-        -I "${kiosk_proto_path}"
-        --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
-        "${kiosk_proto}"
-      DEPENDS "${kiosk_proto}")
+  OUTPUT "${kiosk_proto_srcs}" "${kiosk_proto_hdrs}" "${kiosk_grpc_srcs}" "${kiosk_grpc_hdrs}"
+  COMMAND ${_PROTOBUF_PROTOC}
+  ARGS --grpc_out "${PROTO_GEN_ROOT}/kiosk"
+       --cpp_out "${PROTO_GEN_ROOT}/kiosk"
+       -I "${kiosk_proto_path}"
+       --plugin=protoc-gen-grpc="${_GRPC_CPP_PLUGIN_EXECUTABLE}"
+       "${kiosk_proto}"
+  DEPENDS "${kiosk_proto}"
+  COMMENT "Generating gRPC and Protobuf files"
+)
 
-# Include generated *.pb.h files
-include_directories("proto/gen/kiosk")
+# Include generated files
+include_directories("${PROTO_GEN_ROOT}")
 
-# m_grpc_proto
+# gRPC proto library
 add_library(kiosk_grpc_proto
   ${kiosk_grpc_srcs}
   ${kiosk_grpc_hdrs}
   ${kiosk_proto_srcs}
-  ${kiosk_proto_hdrs})
+  ${kiosk_proto_hdrs}
+)
+
 target_link_libraries(kiosk_grpc_proto
-  ${_REFLECTION}
-  ${_GRPC_GRPCPP}
-  ${_PROTOBUF_LIBPROTOBUF}
-  libpqxx::pqxx
-)
-
-# Library building
-
-foreach(_library
-  db
-)
-  add_library(${_library}
-    "../src/${_library}.h"
-    "../src/${_library}.cc")
-  target_link_libraries(${_library}
-    kiosk_grpc_proto
+  PUBLIC
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF}
     libpqxx::pqxx
+)
+
+# Core libraries
+set(CORE_LIBRARIES
+  db
+)
+
+foreach(lib ${CORE_LIBRARIES})
+  add_library(${lib}
+    "${CMAKE_SOURCE_DIR}/src/${lib}.h"
+    "${CMAKE_SOURCE_DIR}/src/${lib}.cc"
+  )
+  target_link_libraries(${lib}
+    PUBLIC
+      kiosk_grpc_proto
+      ${_REFLECTION}
+      ${_GRPC_GRPCPP}
+      ${_PROTOBUF_LIBPROTOBUF}
+      libpqxx::pqxx
+      nlohmann_json::nlohmann_json
   )
 endforeach()
 
-# Targets kiosk_(client|server)
-foreach(_target
-  kiosk_server)
-  add_executable(${_target}
-    "../src/${_target}.cc")
-  target_include_directories(${_target}
-    PRIVATE
-    ${PostgreSQL_INCLUDE_DIRS}
-  )
-  target_link_libraries(${_target}
+# Main executable
+add_executable(kiosk_server 
+  "${CMAKE_SOURCE_DIR}/src/kiosk_server.cc"
+)
+
+target_link_libraries(kiosk_server
+  PRIVATE
     kiosk_grpc_proto
     db
     ${_REFLECTION}
     ${_GRPC_GRPCPP}
     ${_PROTOBUF_LIBPROTOBUF}
     libpqxx::pqxx
+    nlohmann_json::nlohmann_json
 )
-endforeach()
+
+# Testing setup
+enable_testing()
+find_package(GTest REQUIRED)
+
+# Test executable
+add_executable(db_test
+  tests/db_test.cc
+)
+
+target_link_libraries(db_test
+  PRIVATE
+    db
+    GTest::GTest
+    GTest::Main
+)
+
+add_test(NAME db_test COMMAND db_test)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
