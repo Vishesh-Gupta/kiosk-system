@@ -1,7 +1,5 @@
 syntax = "proto3";
 
-// import "google/api/annotations.proto";
-
 option java_multiple_files = true;
 option java_package = "io.grpc.examples.kiosk";
 option java_outer_classname = "KioskProto";
@@ -9,63 +7,90 @@ option objc_class_prefix = "K";
 
 package kiosk;
 
-// The Kiosk Service definition
 service Kiosk {
-  rpc GetData (GetDataRequest) returns (GetDataResponse) {
-    // option (google.api.http) = { get: "/v1/data" };
-  }
-  rpc ListData (ListDataRequest) returns (ListDataResponse) {
-    // option (google.api.http) = { get: "/v1/datas" };
-  }
-  rpc PostData (PostDataRequest) returns (PostDataResponse) {
-    // option (google.api.http) = { post: "/v1/data/" };
-  }
-  rpc DeleteData (DeleteDataRequest) returns (DeleteDataResponse) {
-    // option (google.api.http) = { delete: "/v1/data" };
-  }
-  rpc UpdateData (UpdateDataRequest) returns (UpdateDataResponse) {
-    // option (google.api.http) = { patch: "/v1/shelves/{shelf}" };
-  }
+  rpc GetMovie (GetMovieRequest) returns (GetMovieResponse);
+  rpc ListMovies (ListMoviesRequest) returns (ListMoviesResponse);
+  rpc CreateMovie (CreateMovieRequest) returns (CreateMovieResponse);
+  rpc DeleteMovie (DeleteMovieRequest) returns (DeleteMovieResponse);
+  rpc UpdateMovie (UpdateMovieRequest) returns (UpdateMovieResponse);
+  rpc HealthCheck (HealthCheckRequest) returns (HealthCheckResponse);
 }
 
-// The request message containing the user's name.
-message GetDataRequest {
+message Movie {
+  int32 id = 1;
+  string name = 2;
+  int32 release_year = 3;
+  string description = 4;
+  int32 duration = 5;
+  string rating = 6;
+  string created_at = 7;
+  string updated_at = 8;
+}
+
+message GetMovieRequest {
+  int32 id = 1;
+}
+
+message GetMovieResponse {
+  bool success = 1;
+  string message = 2;
+  Movie movie = 3;
+}
+
+message ListMoviesRequest {
+  int32 limit = 1;
+  int32 offset = 2;
+  string search_query = 3;
+}
+
+message ListMoviesResponse {
+  bool success = 1;
+  string message = 2;
+  repeated Movie movies = 3;
+  int32 total_count = 4;
+}
+
+message CreateMovieRequest {
   string name = 1;
+  int32 release_year = 2;
+  string description = 3;
+  int32 duration = 4;
+  string rating = 5;
 }
 
-message GetDataResponse {
-  string name = 1;
+message CreateMovieResponse {
+  bool success = 1;
+  string message = 2;
+  Movie movie = 3;
 }
 
-// The response message containing the greetings
-message ListDataRequest {
-  string message = 1;
+message UpdateMovieRequest {
+  int32 id = 1;
+  string name = 2;
+  int32 release_year = 3;
+  string description = 4;
+  int32 duration = 5;
+  string rating = 6;
 }
 
-message ListDataResponse {
-  string message = 1;
+message UpdateMovieResponse {
+  bool success = 1;
+  string message = 2;
+  Movie movie = 3;
 }
 
-message PostDataRequest {
-  string message = 1;
+message DeleteMovieRequest {
+  int32 id = 1;
 }
 
-message PostDataResponse {
-  string message = 1;
+message DeleteMovieResponse {
+  bool success = 1;
+  string message = 2;
 }
 
-message DeleteDataRequest {
-  string message = 1;
-}
+message HealthCheckRequest {}
 
-message DeleteDataResponse {
-  string message = 1;
-}
-
-message UpdateDataRequest {
-  string message = 1;
-}
-
-message UpdateDataResponse {
-  string message = 1;
+message HealthCheckResponse {
+  bool healthy = 1;
+  string message = 2;
 }

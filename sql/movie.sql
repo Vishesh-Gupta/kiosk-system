@@ -1,5 +1,0 @@
-CREATE TABLE MOVIE (
-  ID            INT PRIMARY KEY NOT NULL,
-  NAME          TEXT,
-  RELEASE_YEAR  INT,
-)

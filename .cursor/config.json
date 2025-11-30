@@ -1,0 +1,7 @@
+
+{
+  "includePaths": [
+    "proto",
+    "proto/gen"
+  ]
+}
