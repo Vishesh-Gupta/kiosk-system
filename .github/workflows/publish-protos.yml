@@ -22,9 +22,9 @@ jobs:
           fetch-depth: 0
 
       - name: Setup buf
-        uses: bufbuild/buf-setup-action@v1
+        uses: bufbuild/buf-setup-action@v2
         with:
-          version: "1.28.1"
+          version: "2.2.0"
           github_token: ${{ github.token }}
 
       - name: Lint proto files
@@ -33,7 +33,7 @@ jobs:
       - name: Check for breaking changes
         if: github.event_name == 'pull_request'
         run: |
-          buf breaking --against "https://github.com/${{ github.repository }}.git#branch=main" proto
+          buf breaking proto --against "https://github.com/${{ github.repository }}.git#branch=main"
 
       - name: Push to buf.build registry
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
