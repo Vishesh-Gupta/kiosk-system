@@ -6,8 +6,9 @@
 **/cmake-build-*
 **/deactivate_conanbuildenv*
 
+.cache/
 .DS_Store
-.vscode/
+
 
 # Compiled Object files
 *.slo
