@@ -13,10 +13,13 @@ CREATE TABLE IF NOT EXISTS movie (
 CREATE INDEX IF NOT EXISTS idx_movie_name ON movie(name);
 CREATE INDEX IF NOT EXISTS idx_movie_release_year ON movie(release_year);
 
-INSERT INTO movie (name, release_year, description, duration, rating) VALUES
-('The Matrix', 1999, 'A computer hacker learns about the true nature of reality', 136, 'R'),
-('Inception', 2010, 'A thief enters peoples dreams to steal their secrets', 148, 'PG-13'),
-('Interstellar', 2014, 'Explorers travel through a wormhole in space', 169, 'PG-13'),
-('The Dark Knight', 2008, 'Batman faces the Joker in Gotham', 152, 'PG-13'),
-('Pulp Fiction', 1994, 'The lives of two mob hitmen intertwine', 154, 'R')
-ON CONFLICT DO NOTHING;
+-- Seed data, inserted only into an empty table so the script can be re-run.
+INSERT INTO movie (name, release_year, description, duration, rating)
+SELECT * FROM (VALUES
+  ('The Matrix', 1999, 'A computer hacker learns about the true nature of reality', 136, 'R'),
+  ('Inception', 2010, 'A thief enters peoples dreams to steal their secrets', 148, 'PG-13'),
+  ('Interstellar', 2014, 'Explorers travel through a wormhole in space', 169, 'PG-13'),
+  ('The Dark Knight', 2008, 'Batman faces the Joker in Gotham', 152, 'PG-13'),
+  ('Pulp Fiction', 1994, 'The lives of two mob hitmen intertwine', 154, 'R')
+) AS seed(name, release_year, description, duration, rating)
+WHERE NOT EXISTS (SELECT 1 FROM movie);

@@ -5,11 +5,13 @@
       "name": "WSL",
       "includePath": [
         "${workspaceFolder}/proto",
-        "${workspaceFolder}/proto/gen"
+        "${workspaceFolder}/build/gen",
+        "${workspaceFolder}/src"
       ],
       "defines": [],
       "macFrameworkPath": [],
       "compilerPath": "/usr/bin/clang++",
+      "compileCommands": "${workspaceFolder}/build/compile_commands.json",
       "cStandard": "c17",
       "cppStandard": "c++17"
     }
