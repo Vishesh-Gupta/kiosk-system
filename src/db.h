@@ -1,79 +1,78 @@
 #ifndef DB_H
 #define DB_H
 
-#include <exception>
 #include <memory>
 #include <mutex>
 #include <pqxx/pqxx>
+#include <stdexcept>
 #include <string>
-#include <vector>
+#include <string_view>
 
-// Custom exception for database operations
-class DBException : public std::exception {
-private:
-  std::string message;
-public:
-  explicit DBException(const std::string& msg) : message(msg) {}
-  const char* what() const noexcept override { return message.c_str(); }
+// Raised for connection failures and SQL errors.
+class DBException : public std::runtime_error {
+ public:
+  using std::runtime_error::runtime_error;
 };
 
-class DB {
-private:
-  std::string dbName;
-  std::string host;
-  std::string port;
-  std::string password; 
-  std::string username;
-  std::unique_ptr<pqxx::connection> conn;
-  mutable std::mutex dbMutex; // For thread-safety
+// Raised when the database cannot be reached at all.
+class DBUnavailableException : public DBException {
+ public:
+  using DBException::DBException;
+};
 
-public:
-  DB();
+struct DBConfig {
+  std::string dbName = "kiosk";
+  std::string host = "localhost";
+  std::string port = "5432";
+  std::string username = "postgres";
+  std::string password = "postgres";
+
+  // Loads settings from a JSON file (path from $KIOSK_CONFIG, otherwise
+  // config/config.json), then applies DB_HOST, DB_PORT, DB_NAME, DB_USER and
+  // DB_PASSWORD environment overrides. Missing values keep their defaults.
+  static DBConfig load();
+  static DBConfig loadFromFile(const std::string& path);
+  void applyEnvironment();
+
+  std::string connectionString() const;
+};
+
+// A single PostgreSQL connection shared by all callers. Every query runs in
+// its own transaction under a mutex, and the connection is (re)opened lazily,
+// so the service recovers if the database restarts.
+class DB {
+ public:
+  explicit DB(DBConfig config = DBConfig::load());
   ~DB();
-  
+
   DB(const DB&) = delete;
   DB& operator=(const DB&) = delete;
 
-  // Move constructor
-  DB(DB&& other) noexcept
-      : dbName(std::move(other.dbName)),
-        host(std::move(other.host)),
-        port(std::move(other.port)),
-        password(std::move(other.password)),
-        username(std::move(other.username)),
-        conn(std::move(other.conn)) {}
+  // Runs `sql` with positional parameters ($1, $2, ...) and commits.
+  pqxx::result exec(std::string_view sql, const pqxx::params& params = {});
 
-  // Move assignment operator
-  DB& operator=(DB&& other) noexcept {
-    if (this != &other) {
-      std::lock(dbMutex, other.dbMutex);
-      std::lock_guard<std::mutex> lhs_lock(dbMutex, std::adopt_lock);
-      std::lock_guard<std::mutex> rhs_lock(other.dbMutex, std::adopt_lock);
+  // Returns true if the database answers a trivial query.
+  bool ping();
 
-      dbName = std::move(other.dbName);
-      host = std::move(other.host);
-      port = std::move(other.port);
-      password = std::move(other.password);
-      username = std::move(other.username);
-      conn = std::move(other.conn);
-    }
-    return *this;
-  }
-  
-  pqxx::result exec(const std::string& sql);
-
-  pqxx::result exec_params(const std::string& sql, const std::vector<std::string>& params);
-
-  std::string escape(const std::string& str) const;
-
-  
   bool isConnected() const;
   void connect();
   void disconnect();
   void reconnect();
 
-  std::string getDbName() const { return dbName; }
-  std::string getHost() const { return host; }
+  const std::string& getDbName() const {
+    return config.dbName;
+  }
+  const std::string& getHost() const {
+    return config.host;
+  }
+
+ private:
+  void connectLocked();
+  void disconnectLocked();
+
+  DBConfig config;
+  std::unique_ptr<pqxx::connection> conn;
+  mutable std::mutex dbMutex;
 };
 
-#endif // DB_H
+#endif  // DB_H

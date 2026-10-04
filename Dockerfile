@@ -1,45 +1,50 @@
-FROM alpine:3.17.0 AS build
+# syntax=docker/dockerfile:1
 
-RUN apk update && \
-    apk add --no-cache \
-        build-base=0.5-r3 \
-        cmake=3.24.3-r0 \
-        boost1.80-dev=1.80.0-r3 \
-        postgresql-dev=15.1-r0 \
-        protobuf-dev=3.21.9-r0 \
-        grpc-dev=1.50.1-r0
+# ---- Build stage -------------------------------------------------------------
+FROM ubuntu:24.04 AS build
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        build-essential cmake git pipx python3 ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV PATH="/root/.local/bin:${PATH}"
+RUN pipx install "conan>=2,<3" && conan profile detect --force
 
 WORKDIR /kiosk
 
+# Resolve dependencies first so this layer is cached until conanfile.py changes.
+COPY conanfile.py .
+RUN --mount=type=cache,target=/root/.conan2/p \
+    conan install . --output-folder=build --build=missing -s build_type=Release
+
+COPY CMakeLists.txt .
 COPY proto/ ./proto/
 COPY src/ ./src/
-COPY CMakeLists.txt .
-COPY conanfile.py .
+COPY tests/ ./tests/
 
-RUN conan install . --output-folder=build --build=missing
+RUN --mount=type=cache,target=/root/.conan2/p \
+    cmake -S . -B build \
+        -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DKIOSK_BUILD_TESTS=OFF && \
+    cmake --build build --parallel && \
+    cmake --install build --prefix /opt/kiosk
 
-WORKDIR /kiosk/build
+# ---- Runtime stage -----------------------------------------------------------
+# Conan links gRPC, protobuf, libpq and OpenSSL statically, so the runtime image
+# only needs the C/C++ runtime that ubuntu ships.
+FROM ubuntu:24.04
 
-RUN cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    cmake --build . --parallel 8
+RUN groupadd --system kiosk && useradd --system --gid kiosk kiosk
 
-FROM alpine:3.17.0
+COPY --from=build /opt/kiosk/bin/kiosk_server /usr/local/bin/kiosk_server
+COPY config/config.json /etc/kiosk/config.json
 
-RUN apk update && \
-    apk add --no-cache \
-    libstdc++=12.2.1_git20220924-r4 \
-    boost1.80-program_options=1.80.0-r3 \
-    postgresql-libs=15.1-r0 \
-    protobuf=3.21.9-r0 \
-    grpc=1.50.1-r0
+ENV KIOSK_CONFIG=/etc/kiosk/config.json \
+    KIOSK_ADDRESS=0.0.0.0:50051
 
-RUN addgroup -S kiosk && adduser -S kiosk -G kiosk
 USER kiosk
-
-COPY --chown=kiosk:kiosk --from=build \
-    /kiosk/build/kiosk \
-    /usr/local/bin/
-
 EXPOSE 50051
 
-ENTRYPOINT [ "/usr/local/bin/kiosk" ]
+ENTRYPOINT ["/usr/local/bin/kiosk_server"]

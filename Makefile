@@ -1,38 +1,43 @@
-CC = g++
-CFLAGS = -std=c++17 -Wall -Wextra -O2
-LDFLAGS = -lboost_system -lboost_filesystem -lprotobuf -lgrpc -lpq
+BUILD_DIR  ?= build
+BUILD_TYPE ?= Release
+JOBS       ?= $(shell nproc 2>/dev/null || echo 4)
 
-SRC = $(wildcard src/*.cc)
-OBJ = $(SRC:.cc=.o)
-TARGET = kiosk
+TOOLCHAIN := $(BUILD_DIR)/conan_toolchain.cmake
 
-# Conan configuration
-CONAN = conan
-CONAN_OPTIONS = --build=missing
+.PHONY: all deps configure build test run db db-down docker clean
 
-CONAN_TOOLCHAIN_FILE = $(pwd)/build/conan_toolchain.cmake
-CONAN_PREFIX_PATH = build
+all: build
 
-# Targets
-all: install $(TARGET)
+# Install C++ dependencies with Conan (re-runs when conanfile.py changes).
+deps: $(TOOLCHAIN)
 
-install:
-	@$(CONAN) install . $(CONAN_OPTIONS) --output-folder=$(CONAN_PREFIX_PATH)
+$(TOOLCHAIN): conanfile.py
+	conan install . --output-folder=$(BUILD_DIR) --build=missing \
+		-s build_type=Release -s "&:build_type=$(BUILD_TYPE)"
 
-build: $(CONAN_TOOLCHAIN)
-	@cmake -B build \
-	 -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-	 -DCMAKE_TOOLCHAIN_FILE=$(CONAN_TOOLCHAIN_FILE) \
-	 -DCMAKE_PREFIX_PATH=$(CONAN_PREFIX_PATH) \
-	 -DCMAKE_BUILD_TYPE=Release
-	@cmake --build build --config Release
+configure: $(TOOLCHAIN)
+	cmake -S . -B $(BUILD_DIR) \
+		-DCMAKE_TOOLCHAIN_FILE=$(TOOLCHAIN) \
+		-DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
 
-$(CONAN_TOOLCHAIN): conanfile.py
-	@echo "Conan toolchain not found or outdated. Installing dependencies..."
-	$(CONAN) install . $(CONAN_OPTIONS) --output-folder=build
+build: configure
+	cmake --build $(BUILD_DIR) --parallel $(JOBS)
 
-# Clean up
+test: build
+	ctest --test-dir $(BUILD_DIR) --output-on-failure
+
+run: build
+	./$(BUILD_DIR)/kiosk_server
+
+# Start only PostgreSQL (schema and seed data are loaded on first start).
+db:
+	docker compose -f .docker/docker-compose.yml up -d --wait postgres
+
+db-down:
+	docker compose -f .docker/docker-compose.yml down
+
+docker:
+	docker compose -f .docker/docker-compose.yml up --build
+
 clean:
-	rm -f $(OBJ) $(TARGET)
-
-.PHONY: all clean build install
+	rm -rf $(BUILD_DIR)
