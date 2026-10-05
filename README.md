@@ -58,6 +58,49 @@ Or run the whole stack in containers:
 make docker           # docker compose up --build (postgres + kiosk server)
 ```
 
+### Terminal UI
+
+`kiosk_tui` is an interactive terminal client for browsing and editing movies
+over gRPC:
+
+```bash
+make tui                                  # connects to localhost:50051
+./build/kiosk_tui --address host:50051    # or set KIOSK_SERVER=host:50051
+```
+
+```
+╭────────────────────────────────────────────────────────────────────────────────────────╮
+│ KIOSK   Movies  localhost:50051                                               ● online │
+├────────────────────────────────────────────────────────────────────────────────────────┤
+│ Search type to filter by title or description                                 5 movies │
+├───────────────────────────────────────────────────┬────────────────────────────────────┤
+│ ID    Title                    Year  Len   Rating │                                    │
+├───────────────────────────────────────────────────┤ Pulp Fiction                       │
+│ 5     Pulp Fiction            1994  154m  R       │ 1994  ·  154 min  ·  Rated R       │
+│ 4     The Dark Knight         2008  152m  PG-13   │ ────────────────────────────────── │
+│ 3     Interstellar            2014  169m  PG-13   │ The lives of two mob hitmen        │
+│ 2     Inception               2010  148m  PG-13   │ intertwine                         │
+│ 1     The Matrix              1999  136m  R       │                                    │
+├───────────────────────────────────────────────────┴────────────────────────────────────┤
+│ ↑↓ select  / search  n new  e edit  d delete  [ ] page  r refresh  q quit              │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+| Key            | Action                                             |
+|----------------|----------------------------------------------------|
+| `↑` `↓`        | Move the selection (mouse works too)               |
+| `/`            | Live search by title or description; `Esc` returns |
+| `n`            | New movie (form: `Tab` between fields, `Enter` saves, `Esc` cancels) |
+| `e` / `Enter`  | Edit the selected movie                            |
+| `d` / `Delete` | Delete the selected movie (asks for confirmation)  |
+| `[` `]`        | Previous / next page (20 movies per page)          |
+| `r`            | Reload the list and re-check server health         |
+| `q`            | Quit                                               |
+
+RPCs run on a background thread, so the UI stays responsive on a slow or
+unreachable server; the header shows server health and is refreshed every five
+seconds.
+
 ### Configuration
 
 | Setting           | Source                                                       | Default             |
