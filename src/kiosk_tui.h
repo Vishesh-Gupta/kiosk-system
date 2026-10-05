@@ -94,6 +94,13 @@ class KioskApp {
   bool confirmOpen() const {
     return confirmOpen_;
   }
+  bool gotoOpen() const {
+    return gotoOpen_;
+  }
+  // Id of the movie shown via "go to ID", or 0 when showing the full list.
+  int32_t pinnedId() const {
+    return pinnedId_;
+  }
   int page() const {
     return page_;
   }
@@ -102,6 +109,12 @@ class KioskApp {
   enum class FormMode { Create, Edit };
 
   void reload(int32_t selectId = 0);
+  void loadPinned(int generation);
+  void applyMovies(std::vector<kiosk::Movie> movies, int32_t totalCount, int32_t selectId);
+  void handleLoadError(const grpc::Status& status);
+  void openGoto();
+  void submitGoto();
+  void unpin();
   void openCreateForm();
   void openEditForm();
   void submitForm();
@@ -120,6 +133,7 @@ class KioskApp {
   ftxui::Element renderDetails() const;
   ftxui::Element renderForm();
   ftxui::Element renderConfirm();
+  ftxui::Element renderGoto();
 
   const KioskClient& client_;
   Dispatcher& dispatcher_;
@@ -134,6 +148,7 @@ class KioskApp {
   std::string query_;
   int listGeneration_ = 0;
   int pendingRequests_ = 0;
+  int32_t pinnedId_ = 0;  // set by "go to ID"; the list then holds only that movie
 
   // Server state.
   bool healthKnown_ = false;
@@ -160,7 +175,13 @@ class KioskApp {
   int32_t confirmId_ = 0;
   std::string confirmName_;
 
+  // "Go to ID" prompt.
+  bool gotoOpen_ = false;
+  std::string gotoInput_;
+  std::string gotoError_;
+
   ftxui::Component searchInput_;
+  ftxui::Component gotoInputComponent_;
   ftxui::Component list_;
   std::vector<ftxui::Component> formInputs_;  // name, year, duration, rating, description
   ftxui::Component formButtons_;
