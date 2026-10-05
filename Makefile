@@ -4,7 +4,7 @@ JOBS       ?= $(shell nproc 2>/dev/null || echo 4)
 
 TOOLCHAIN := $(BUILD_DIR)/conan_toolchain.cmake
 
-.PHONY: all deps configure build test run db db-down docker clean
+.PHONY: all deps configure build test run tui db db-down docker clean
 
 all: build
 
@@ -28,6 +28,11 @@ test: build
 
 run: build
 	./$(BUILD_DIR)/kiosk_server
+
+# Terminal UI; point it elsewhere with `make tui ADDRESS=host:port`.
+ADDRESS ?= localhost:50051
+tui: build
+	./$(BUILD_DIR)/kiosk_tui --address $(ADDRESS)
 
 # Start only PostgreSQL (schema and seed data are loaded on first start).
 db:

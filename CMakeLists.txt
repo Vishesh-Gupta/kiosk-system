@@ -31,6 +31,7 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 
 find_package(libpqxx REQUIRED)
 find_package(nlohmann_json REQUIRED)
+find_package(ftxui REQUIRED)
 
 # Code generators run on the build machine. Use the imported targets when the
 # package exports them, otherwise look them up on the program path (Conan's
@@ -107,7 +108,23 @@ target_link_libraries(kiosk_server
     Threads::Threads
 )
 
-install(TARGETS kiosk_server RUNTIME DESTINATION bin)
+# --- Terminal client --------------------------------------------------------
+add_library(kiosk_client src/kiosk_client.cc)
+target_include_directories(kiosk_client PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
+target_link_libraries(kiosk_client PUBLIC kiosk_grpc_proto)
+
+add_library(kiosk_tui_lib src/kiosk_tui.cc)
+target_link_libraries(kiosk_tui_lib
+  PUBLIC
+    kiosk_client
+    ftxui::component
+    Threads::Threads
+)
+
+add_executable(kiosk_tui src/kiosk_tui_main.cc)
+target_link_libraries(kiosk_tui PRIVATE kiosk_tui_lib)
+
+install(TARGETS kiosk_server kiosk_tui RUNTIME DESTINATION bin)
 
 # --- Tests ------------------------------------------------------------------
 if(KIOSK_BUILD_TESTS)
@@ -115,11 +132,12 @@ if(KIOSK_BUILD_TESTS)
   find_package(GTest REQUIRED)
   include(GoogleTest)
 
-  foreach(test_name db_test kiosk_service_test)
+  foreach(test_name db_test kiosk_service_test kiosk_tui_test)
     add_executable(${test_name} tests/${test_name}.cc)
     target_link_libraries(${test_name}
       PRIVATE
         kiosk_service
+        kiosk_tui_lib
         GTest::gtest
         GTest::gtest_main
     )

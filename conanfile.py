@@ -14,6 +14,7 @@ class KioskRecipe(ConanFile):
         self.requires("grpc/1.69.0")
         self.requires("libpqxx/7.10.3")
         self.requires("nlohmann_json/3.11.3")
+        self.requires("ftxui/7.0.3")
         self.requires("gtest/1.15.0")
 
     def build_requirements(self):
