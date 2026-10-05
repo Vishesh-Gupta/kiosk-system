@@ -111,6 +111,7 @@ KioskApp::KioskApp(const KioskClient& client, Dispatcher& dispatcher, std::funct
     : client_(client), dispatcher_(dispatcher), onQuit_(std::move(onQuit)) {
   InputOption searchOption = singleLine([this] { list_->TakeFocus(); });
   searchOption.on_change = [this] {
+    pinnedId_ = 0;
     page_ = 0;
     reload();
   };
@@ -150,7 +151,11 @@ KioskApp::KioskApp(const KioskClient& client, Dispatcher& dispatcher, std::funct
   });
   auto confirm = Renderer(confirmButtons_, [this] { return renderConfirm(); });
 
+  gotoInputComponent_ = Input(&gotoInput_, "movie id", singleLine([this] { submitGoto(); }));
+  auto gotoPrompt = Renderer(gotoInputComponent_, [this] { return renderGoto(); });
+
   root_ = main | Modal(form, &formOpen_) | Modal(confirm, &confirmOpen_) |
+          Modal(gotoPrompt, &gotoOpen_) |
           CatchEvent([this](const Event& event) { return handleEvent(event); });
   list_->TakeFocus();
 }
@@ -178,10 +183,14 @@ void KioskApp::refreshHealth() {
 
 void KioskApp::reload(int32_t selectId) {
   const int generation = ++listGeneration_;
+  ++pendingRequests_;
+  if (pinnedId_ > 0) {
+    loadPinned(generation);
+    return;
+  }
+
   const std::string query = query_;
   const int32_t offset = page_ * kPageSize;
-  ++pendingRequests_;
-
   dispatcher_.background([this, generation, query, offset, selectId] {
     auto result = client_.ListMovies(query, kPageSize, offset);
     dispatcher_.ui([this, generation, selectId, result] {
@@ -190,13 +199,7 @@ void KioskApp::reload(int32_t selectId) {
         return;  // a newer request superseded this one
       }
       if (!result.ok()) {
-        setStatus("Could not load movies: " + describeStatus(result.status), true);
-        if (result.status.error_code() == grpc::StatusCode::UNAVAILABLE ||
-            result.status.error_code() == grpc::StatusCode::DEADLINE_EXCEEDED) {
-          healthKnown_ = true;
-          healthy_ = false;
-          healthMessage_ = describeStatus(result.status);
-        }
+        handleLoadError(result.status);
         return;
       }
 
@@ -208,25 +211,91 @@ void KioskApp::reload(int32_t selectId) {
         reload(selectId);
         return;
       }
-
-      movies_.assign(response.movies().begin(), response.movies().end());
-      entries_.clear();
-      for (const auto& movie : movies_) {
-        entries_.push_back(movie.name());
-      }
-      if (selectId > 0) {
-        auto it = std::find_if(movies_.begin(), movies_.end(),
-                               [selectId](const kiosk::Movie& m) { return m.id() == selectId; });
-        if (it != movies_.end()) {
-          selected_ = static_cast<int>(it - movies_.begin());
-        }
-      }
-      selected_ = std::clamp(selected_, 0, std::max(0, static_cast<int>(movies_.size()) - 1));
-      if (statusIsError_ && status_.rfind("Could not load", 0) == 0) {
-        setStatus("", false);
-      }
+      applyMovies({response.movies().begin(), response.movies().end()}, totalCount_, selectId);
     });
   });
+}
+
+void KioskApp::loadPinned(int generation) {
+  const int32_t id = pinnedId_;
+  dispatcher_.background([this, generation, id] {
+    auto result = client_.GetMovie(id);
+    dispatcher_.ui([this, generation, id, result] {
+      --pendingRequests_;
+      if (generation != listGeneration_) {
+        return;
+      }
+      if (result.status.error_code() == grpc::StatusCode::NOT_FOUND) {
+        setStatus("Movie #" + std::to_string(id) + " not found", true);
+        pinnedId_ = 0;
+        reload();
+        return;
+      }
+      if (!result.ok()) {
+        handleLoadError(result.status);
+        return;
+      }
+      applyMovies({result.response.movie()}, 1, id);
+    });
+  });
+}
+
+void KioskApp::applyMovies(std::vector<kiosk::Movie> movies, int32_t totalCount, int32_t selectId) {
+  movies_ = std::move(movies);
+  totalCount_ = totalCount;
+  entries_.clear();
+  for (const auto& movie : movies_) {
+    entries_.push_back(movie.name());
+  }
+  if (selectId > 0) {
+    auto it = std::find_if(movies_.begin(), movies_.end(),
+                           [selectId](const kiosk::Movie& m) { return m.id() == selectId; });
+    if (it != movies_.end()) {
+      selected_ = static_cast<int>(it - movies_.begin());
+    }
+  }
+  selected_ = std::clamp(selected_, 0, std::max(0, static_cast<int>(movies_.size()) - 1));
+  if (statusIsError_ && status_.rfind("Could not load", 0) == 0) {
+    setStatus("", false);
+  }
+}
+
+void KioskApp::handleLoadError(const grpc::Status& status) {
+  setStatus("Could not load movies: " + describeStatus(status), true);
+  if (status.error_code() == grpc::StatusCode::UNAVAILABLE ||
+      status.error_code() == grpc::StatusCode::DEADLINE_EXCEEDED) {
+    healthKnown_ = true;
+    healthy_ = false;
+    healthMessage_ = describeStatus(status);
+  }
+}
+
+void KioskApp::openGoto() {
+  gotoInput_.clear();
+  gotoError_.clear();
+  gotoOpen_ = true;
+  gotoInputComponent_->TakeFocus();
+}
+
+void KioskApp::submitGoto() {
+  int32_t id = 0;
+  if (!parseNumber(gotoInput_, id) || id <= 0) {
+    gotoError_ = "Enter a positive movie id";
+    return;
+  }
+  gotoOpen_ = false;
+  list_->TakeFocus();
+  pinnedId_ = id;
+  query_.clear();
+  page_ = 0;
+  selected_ = 0;
+  reload();
+}
+
+void KioskApp::unpin() {
+  pinnedId_ = 0;
+  page_ = 0;
+  reload();
 }
 
 void KioskApp::changePage(int delta) {
@@ -377,11 +446,14 @@ void KioskApp::confirmDelete() {
   const std::string name = confirmName_;
   dispatcher_.background([this, id, name] {
     auto result = client_.DeleteMovie(id);
-    dispatcher_.ui([this, result, name] {
+    dispatcher_.ui([this, result, id, name] {
       if (!result.ok()) {
         setStatus("Could not delete \"" + name + "\": " + describeStatus(result.status), true);
       } else {
         setStatus("Deleted \"" + name + "\"", false);
+        if (pinnedId_ == id) {
+          pinnedId_ = 0;  // nothing left to show; go back to the full list
+        }
       }
       reload();
     });
@@ -411,6 +483,15 @@ bool KioskApp::handleEvent(const Event& event) {
     return false;
   }
 
+  if (gotoOpen_) {
+    if (event == Event::Escape) {
+      gotoOpen_ = false;
+      list_->TakeFocus();
+      return true;
+    }
+    return false;
+  }
+
   if (searchInput_->Focused()) {
     if (event == Event::Escape || event == Event::ArrowDown || event == Event::Return) {
       list_->TakeFocus();
@@ -429,6 +510,10 @@ bool KioskApp::handleEvent(const Event& event) {
   }
   if (event == Event::Character('n')) {
     openCreateForm();
+    return true;
+  }
+  if (event == Event::Character('g')) {
+    openGoto();
     return true;
   }
   if (event == Event::Character('e') || event == Event::Return) {
@@ -451,6 +536,10 @@ bool KioskApp::handleEvent(const Event& event) {
   }
   if (event == Event::PageUp || event == Event::Character('[')) {
     changePage(-1);
+    return true;
+  }
+  if (event == Event::Escape && pinnedId_ > 0) {
+    unpin();
     return true;
   }
   if (event == Event::Escape && !query_.empty()) {
@@ -528,7 +617,9 @@ Element KioskApp::renderMain() {
   }
 
   std::string countText = std::to_string(totalCount_) + (totalCount_ == 1 ? " movie" : " movies");
-  if (totalCount_ > kPageSize) {
+  if (pinnedId_ > 0) {
+    countText = "movie #" + std::to_string(pinnedId_) + "  ·  Esc shows all";
+  } else if (totalCount_ > kPageSize) {
     countText += "  ·  page " + std::to_string(page_ + 1) + "/" + std::to_string(pageCount());
   }
 
@@ -563,6 +654,7 @@ Element KioskApp::renderMain() {
     hints = hbox({
         keyHint("↑↓", "select"),
         keyHint("/", "search"),
+        keyHint("g", "go to id"),
         keyHint("n", "new"),
         keyHint("e", "edit"),
         keyHint("d", "delete"),
@@ -624,6 +716,17 @@ Element KioskApp::renderForm() {
                           formButtons_->Render()}),
                     text("Tab next field · Enter save · Esc cancel") | dim | center,
                 }) | size(WIDTH, GREATER_THAN, 60)) |
+         modalFrame;
+}
+
+Element KioskApp::renderGoto() {
+  return window(
+             text(" Go to movie ") | bold,
+             vbox({
+                 hbox({text("ID  ") | bold, gotoInputComponent_->Render() | color(kAccent) | flex}),
+                 gotoError_.empty() ? text("") : text(gotoError_) | color(Color::RedLight),
+                 text("Enter open · Esc cancel") | dim | center,
+             }) | size(WIDTH, GREATER_THAN, 32)) |
          modalFrame;
 }
 

@@ -256,3 +256,74 @@ TEST_F(KioskTuiTest, QuitsOnQ) {
   ui()->OnEvent(Event::Character('q'));
   EXPECT_TRUE(quit);
 }
+
+TEST_F(KioskTuiTest, GoToIdShowsMovieFromGetMovie) {
+  const int32_t id = createMovie("Eta", 1977);
+  createMovie("Theta");  // newer, so Eta is not the first row of the full list
+
+  ui()->OnEvent(Event::Character('g'));
+  ASSERT_TRUE(app->gotoOpen());
+  typeText(ui(), std::to_string(id));
+  ui()->OnEvent(Event::Return);
+
+  EXPECT_FALSE(app->gotoOpen());
+  EXPECT_EQ(app->pinnedId(), id);
+  ASSERT_EQ(app->movies().size(), 1u);
+  EXPECT_EQ(app->movies()[0].name(), prefix + "Eta");
+  EXPECT_NE(renderText(ui()).find("movie #" + std::to_string(id)), std::string::npos);
+
+  // Editing keeps the pinned view and shows the updated movie.
+  ui()->OnEvent(Event::Character('e'));
+  ui()->OnEvent(Event::Tab);
+  ui()->OnEvent(Event::End);
+  for (int i = 0; i < 4; ++i) {
+    ui()->OnEvent(Event::Backspace);
+  }
+  typeText(ui(), "1978");
+  ui()->OnEvent(Event::Return);
+  EXPECT_EQ(app->pinnedId(), id);
+  ASSERT_EQ(app->movies().size(), 1u);
+  EXPECT_EQ(app->movies()[0].release_year(), 1978);
+
+  // Esc returns to the full list.
+  ui()->OnEvent(Event::Escape);
+  EXPECT_EQ(app->pinnedId(), 0);
+  EXPECT_GT(app->movies().size(), 1u);
+}
+
+TEST_F(KioskTuiTest, GoToMissingIdReportsNotFound) {
+  ui()->OnEvent(Event::Character('g'));
+  typeText(ui(), "2147483647");
+  ui()->OnEvent(Event::Return);
+
+  EXPECT_EQ(app->pinnedId(), 0);
+  EXPECT_TRUE(app->statusIsError());
+  EXPECT_EQ(app->statusMessage(), "Movie #2147483647 not found");
+}
+
+TEST_F(KioskTuiTest, GoToRejectsInvalidId) {
+  ui()->OnEvent(Event::Character('g'));
+  typeText(ui(), "abc");
+  ui()->OnEvent(Event::Return);
+  EXPECT_TRUE(app->gotoOpen());
+  EXPECT_NE(renderText(ui()).find("Enter a positive movie id"), std::string::npos);
+
+  ui()->OnEvent(Event::Escape);
+  EXPECT_FALSE(app->gotoOpen());
+  EXPECT_EQ(app->pinnedId(), 0);
+}
+
+TEST_F(KioskTuiTest, DeletingPinnedMovieReturnsToList) {
+  const int32_t id = createMovie("Iota");
+  ui()->OnEvent(Event::Character('g'));
+  typeText(ui(), std::to_string(id));
+  ui()->OnEvent(Event::Return);
+  ASSERT_EQ(app->pinnedId(), id);
+
+  ui()->OnEvent(Event::Character('d'));
+  ui()->OnEvent(Event::Character('y'));
+  EXPECT_EQ(app->pinnedId(), 0);
+  EXPECT_FALSE(app->statusIsError());
+  EXPECT_EQ(app->statusMessage(), "Deleted \"" + prefix + "Iota\"");
+  EXPECT_FALSE(hasMovie("Iota"));
+}

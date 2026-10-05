@@ -82,7 +82,7 @@ make tui                                  # connects to localhost:50051
 │ 2     Inception               2010  148m  PG-13   │ intertwine                         │
 │ 1     The Matrix              1999  136m  R       │                                    │
 ├───────────────────────────────────────────────────┴────────────────────────────────────┤
-│ ↑↓ select  / search  n new  e edit  d delete  [ ] page  r refresh  q quit              │
+│ ↑↓ select  / search  g go to id  n new  e edit  d delete  [ ] page  r refresh  q quit   │
 ╰────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -90,6 +90,7 @@ make tui                                  # connects to localhost:50051
 |----------------|----------------------------------------------------|
 | `↑` `↓`        | Move the selection (mouse works too)               |
 | `/`            | Live search by title or description; `Esc` returns |
+| `g`            | Go to a movie by ID (`GetMovie`); `Esc` returns to the full list |
 | `n`            | New movie (form: `Tab` between fields, `Enter` saves, `Esc` cancels) |
 | `e` / `Enter`  | Edit the selected movie                            |
 | `d` / `Delete` | Delete the selected movie (asks for confirmation)  |
