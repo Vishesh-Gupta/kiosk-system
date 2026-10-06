@@ -9,19 +9,30 @@ on:
 env:
   build_dir: build
 
+# A newer push to the same branch or PR supersedes the running build.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    name: ${{ matrix.name }}
+    # The Release job's name must stay "build (ubuntu-latest, Release, g++)":
+    # branch protection on main requires a check with exactly that name, and
+    # a PR waits on it forever if no job reports it.
+    name: ${{ matrix.check_name }}
+    # Pinned rather than ubuntu-latest so the compiler (GCC 13) keeps matching
+    # Conan Center's prebuilt binaries; otherwise gRPC builds from source.
     runs-on: ubuntu-24.04
+    timeout-minutes: 45
 
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Release GCC
+          - check_name: build (ubuntu-latest, Release, g++)
             build_type: Release
             coverage: false
-          - name: Debug Coverage GCC
+          - check_name: build (ubuntu-latest, Debug, g++, coverage)
             build_type: Debug
             coverage: true
 
@@ -97,7 +108,7 @@ jobs:
           PGDATABASE: kiosk
 
       - name: Test
-        run: ctest --test-dir ${{ env.build_dir }} --output-on-failure
+        run: ctest --test-dir ${{ env.build_dir }} --output-on-failure --timeout 120
 
       - name: Generate coverage report
         if: ${{ matrix.coverage }}
