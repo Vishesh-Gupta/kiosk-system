@@ -8,88 +8,107 @@ on:
 
 env:
   build_dir: build
-  conan_config: Release
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    name: ${{ matrix.name }}
+    runs-on: ubuntu-24.04
 
     strategy:
-      fail-fast: true
+      fail-fast: false
       matrix:
         include:
           - name: Release GCC
             build_type: Release
-            cpp_compiler: g++
             coverage: false
           - name: Debug Coverage GCC
             build_type: Debug
-            cpp_compiler: g++
             coverage: true
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: kiosk
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d kiosk"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: kiosk
+      KIOSK_REQUIRE_DB: "1"
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Cache Conan packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.conan2
-          key: ${{ runner.os }}-conan-${{ hashFiles('**/conanfile.txt') }}
-          restore-keys: ${{ runner.os }}-conan-
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential autoconf libtool pkg-config lcov
+          sudo apt-get install -y build-essential cmake lcov postgresql-client
 
-      - name: Install Conan (pipx for speed)
+      - name: Install Conan
         run: |
-          python3 -m pip install --user pipx
-          ~/.local/bin/pipx install "conan<2.0.0" --include-deps
+          pipx install "conan>=2,<3"
+          conan profile detect --force
 
-      - name: Configure Conan
-        run: |
-          ~/.local/bin/conan profile detect --force
-          ~/.local/bin/conan install . \
-            --output-folder=${{ env.build_dir }} \
-            --build=never \
-            -s build_type=${{ matrix.build_type }} \
-            --require-approval=never \
-            --client-conf tools.cmake.cmake_program:cmake="$(which cmake)" \
-            --client-conf tools.system.package_manager:mode=install \
-            --client-conf general.parallel_download=6
-        env:
-          CONAN_SYSREQUIRES_MODE: disabled
+      - name: Cache Conan packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.conan2/p
+          key: ${{ runner.os }}-conan-${{ hashFiles('conanfile.py') }}
+          restore-keys: ${{ runner.os }}-conan-
 
-      - name: Create Proto directories
-        run: mkdir -p ${{ github.workspace }}/proto/gen/kiosk
+      # Dependencies are always Release builds (prebuilt on Conan Center);
+      # only this project's code is built with matrix.build_type.
+      - name: Install dependencies
+        run: >
+          conan install .
+          --output-folder=${{ env.build_dir }}
+          --build=missing
+          -s build_type=Release
+          -s "&:build_type=${{ matrix.build_type }}"
 
       - name: Configure CMake
         run: >
-          cmake -B ${{ env.build_dir }}
-          -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+          cmake -S . -B ${{ env.build_dir }}
           -DCMAKE_TOOLCHAIN_FILE=${{ env.build_dir }}/conan_toolchain.cmake
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -DENABLE_COVERAGE=${{ matrix.coverage }}
+          -DENABLE_COVERAGE=${{ matrix.coverage && 'ON' || 'OFF' }}
 
       - name: Build
-        run: cmake --build ${{ env.build_dir }} --config ${{ matrix.build_type }} -j2
+        run: cmake --build ${{ env.build_dir }} --parallel
+
+      - name: Load database schema
+        run: psql -v ON_ERROR_STOP=1 -f sql/schema.sql
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: kiosk
 
       - name: Test
-        working-directory: ${{ env.build_dir }}
-        run: |
-          ctest --output-on-failure --build-config ${{ matrix.build_type }}
+        run: ctest --test-dir ${{ env.build_dir }} --output-on-failure
 
       - name: Generate coverage report
-        if: ${{ matrix.coverage == true }}
+        if: ${{ matrix.coverage }}
         working-directory: ${{ env.build_dir }}
         run: |
-          lcov --capture --directory . --output-file coverage.info
-          lcov --remove coverage.info '/usr/*' --output-file coverage.info
+          lcov --capture --directory . --output-file coverage.info --ignore-errors mismatch
+          lcov --extract coverage.info "${{ github.workspace }}/src/*" --output-file coverage.info
           lcov --list coverage.info
 
       - name: Upload coverage report
-        if: ${{ matrix.coverage == true }}
+        if: ${{ matrix.coverage }}
         uses: actions/upload-artifact@v4
         with:
           name: coverage-report
